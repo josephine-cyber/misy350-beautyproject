@@ -1,0 +1,10 @@
+[
+    {
+        "id": "1",
+        "email": "admin@glamstudio.com",
+        "full_name": "Salon Owner",
+        "password": "admin123",
+        "role": "Admin",
+        "registered_at": "2026-03-31 10:00:00"
+    }
+]
