@@ -4,10 +4,7 @@
         "service_name": "Silk Press",
         "price": 65,
         "duration": "1 hour",
-        "available_slots": [
-            "2026-04-02 10:00 AM",
-            "2026-04-02 1:00 PM"
-        ]
+        "available_slots": []
     },
     {
         "service_id": "2",
@@ -15,7 +12,6 @@
         "price": 85,
         "duration": "1.5 hours",
         "available_slots": [
-            "2026-04-03 11:00 AM",
             "2026-04-03 3:00 PM"
         ]
     }

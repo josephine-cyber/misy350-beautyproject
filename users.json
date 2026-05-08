@@ -6,5 +6,21 @@
         "password": "admin123",
         "role": "Admin",
         "registered_at": "2026-03-31 10:00:00"
+    },
+    {
+        "id": "2",
+        "email": "fbarry@udel.edu",
+        "full_name": "Fanta Barry",
+        "password": "fanta2004",
+        "role": "Client",
+        "registered_at": "2026-04-01 11:34:57"
+    },
+    {
+        "id": "3",
+        "email": "fantabarry64@gmail.com",
+        "full_name": "Fanta Barry",
+        "password": "fanta2004",
+        "role": "Client",
+        "registered_at": "2026-05-02 14:59:25"
     }
 ]

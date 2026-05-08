@@ -1,1 +1,26 @@
-[]
+[
+    {
+        "booking_id": "1",
+        "client_name": "Fanta Barry",
+        "client_email": "fbarry@udel.edu",
+        "service_name": "Silk Press",
+        "appointment_time": "2026-04-02 10:00 AM",
+        "status": "Booked"
+    },
+    {
+        "booking_id": "2",
+        "client_name": "Fanta Barry",
+        "client_email": "fbarry@udel.edu",
+        "service_name": "Silk Press",
+        "appointment_time": "2026-04-02 1:00 PM",
+        "status": "Booked"
+    },
+    {
+        "booking_id": "3",
+        "client_name": "Fanta Barry",
+        "client_email": "fantabarry64@gmail.com",
+        "service_name": "Soft Glam Makeup",
+        "appointment_time": "2026-04-03 11:00 AM",
+        "status": "Booked"
+    }
+]
