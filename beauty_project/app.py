@@ -80,7 +80,6 @@ if "current_user" not in st.session_state:
 
 # ---------------- TITLE ----------------
 st.title("💄 AI-Powered Styling & Booking Assistant")
-st.caption("Phase 1 MVP - Beauty Booking App")
 
 # ---------------- SIDEBAR ----------------
 if not st.session_state.logged_in:
