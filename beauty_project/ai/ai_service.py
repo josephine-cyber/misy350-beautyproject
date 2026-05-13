@@ -4,7 +4,7 @@ from openai import OpenAI
 
 class BeautyChatbot:
     def __init__(self):
-        self.client = OpenAI(api_key=st.secrets["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"])
+        self.client = OpenAI(api_key=st.secrets["OPEN_AI_KEY"])
 
     def answer_question(self, question, services):
         service_info = ""
