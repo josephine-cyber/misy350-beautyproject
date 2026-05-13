@@ -5,6 +5,14 @@
         "client_email": "fbarry@udel.edu",
         "service_name": "Silk Press",
         "appointment_time": "2026-04-02 10:00 AM",
+        "status": "Cancelled"
+    },
+    {
+        "booking_id": "2",
+        "client_name": "Fanta Barry",
+        "client_email": "fbarry@udel.edu",
+        "service_name": "Silk Press",
+        "appointment_time": "2026-04-02 1:00 PM",
         "status": "Booked"
     }
 ]

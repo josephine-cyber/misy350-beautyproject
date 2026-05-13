@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import time
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date
 
 st.set_page_config(
     page_title="Beauty Booking Assistant",
@@ -24,6 +24,14 @@ default_users = [
         "password": "admin123",
         "role": "Admin",
         "registered_at": "2026-03-31 10:00:00"
+    },
+    {
+        "id": "2",
+        "email": "client@gmail.com",
+        "full_name": "Client User",
+        "password": "client123",
+        "role": "Client",
+        "registered_at": "2026-03-31 10:00:00"
     }
 ]
 
@@ -33,14 +41,21 @@ default_services = [
         "service_name": "Silk Press",
         "price": 65,
         "duration": "1 hour",
-        "available_slots": ["2026-04-02 10:00 AM", "2026-04-02 1:00 PM"]
+        "available_slots": []
     },
     {
         "service_id": "2",
         "service_name": "Soft Glam Makeup",
         "price": 85,
         "duration": "1.5 hours",
-        "available_slots": ["2026-04-03 11:00 AM", "2026-04-03 3:00 PM"]
+        "available_slots": []
+    },
+    {
+        "service_id": "3",
+        "service_name": "Full Glam Makeup",
+        "price": 120,
+        "duration": "2 hours",
+        "available_slots": []
     }
 ]
 
@@ -78,6 +93,43 @@ if "logged_in" not in st.session_state:
 if "current_user" not in st.session_state:
     st.session_state.current_user = None
 
+# ---------------- HELPER FUNCTIONS ----------------
+def save_users():
+    with users_path.open("w", encoding="utf-8") as f:
+        json.dump(users, f, indent=4)
+
+def save_services():
+    with services_path.open("w", encoding="utf-8") as f:
+        json.dump(services, f, indent=4)
+
+def save_bookings():
+    with bookings_path.open("w", encoding="utf-8") as f:
+        json.dump(bookings, f, indent=4)
+
+def get_ai_response(customer_question, services):
+    service_text = ""
+
+    for service in services:
+        service_text += (
+            f"- {service['service_name']}: "
+            f"${service['price']}, "
+            f"{service['duration']}\n"
+        )
+
+    prompt = f"""
+You are an AI beauty booking assistant.
+
+Only recommend services from this service list:
+{service_text}
+
+Customer question:
+{customer_question}
+
+Answer in a friendly and helpful way. Recommend the best service from the list.
+Mention why it fits the customer's needs. Do not make up services that are not listed.
+"""
+
+
 # ---------------- TITLE ----------------
 st.title("💄 AI-Powered Styling & Booking Assistant")
 
@@ -99,6 +151,7 @@ if not st.session_state.logged_in and page == "Register":
     with col1:
         with st.container(border=True):
             st.markdown("### New User Registration")
+
             email = st.text_input("Email Address")
             full_name = st.text_input("First and Last Name")
             password = st.text_input("Password", type="password")
@@ -109,6 +162,7 @@ if not st.session_state.logged_in and page == "Register":
                     st.error("Please fill in all fields.")
                 else:
                     email_exists = False
+
                     for user in users:
                         if user["email"] == email:
                             email_exists = True
@@ -130,9 +184,7 @@ if not st.session_state.logged_in and page == "Register":
                             }
 
                             users.append(new_user)
-
-                            with users_path.open("w", encoding="utf-8") as f:
-                                json.dump(users, f, indent=4)
+                            save_users()
 
                         st.success("Account created successfully!")
 
@@ -144,11 +196,21 @@ if not st.session_state.logged_in and page == "Register":
 elif not st.session_state.logged_in and page == "Login":
     st.subheader("Login")
 
+    st.info(
+        """
+        **Test Accounts**
+
+        Admin: admin@glamstudio.com | Password: admin123  
+        Client: client@gmail.com | Password: client123
+        """
+    )
+
     col1, col2 = st.columns(2)
 
     with col1:
         with st.container(border=True):
             st.markdown("### User Login")
+
             email = st.text_input("Email Address")
             password = st.text_input("Password", type="password")
 
@@ -192,12 +254,13 @@ elif st.session_state.logged_in and page == "Dashboard":
 
         with admin_tab1:
             st.markdown("### Add New Service")
+
             service_name = st.text_input("Service Name")
             price = st.number_input("Price", min_value=0, step=5)
             duration = st.selectbox("Duration", ["30 mins", "1 hour", "1.5 hours", "2 hours"])
 
             if st.button("Add Service"):
-                if not service_name or not duration:
+                if not service_name:
                     st.error("Please complete all service fields.")
                 else:
                     with st.spinner("Adding service..."):
@@ -212,39 +275,134 @@ elif st.session_state.logged_in and page == "Dashboard":
                         }
 
                         services.append(new_service)
-
-                        with services_path.open("w", encoding="utf-8") as f:
-                            json.dump(services, f, indent=4)
+                        save_services()
 
                     st.success("Service added successfully!")
 
             st.markdown("### Current Services")
             st.dataframe(services)
 
+            st.divider()
+            st.markdown("### Update Service")
+
+            if len(services) > 0:
+                update_options = []
+
+                for service in services:
+                    update_options.append(
+                        f"{service['service_id']} - {service['service_name']}"
+                    )
+
+                selected_update = st.selectbox("Choose Service to Update", update_options)
+                update_id = selected_update.split(" - ")[0]
+
+                selected_service = None
+
+                for service in services:
+                    if service["service_id"] == update_id:
+                        selected_service = service
+                        break
+
+                if selected_service:
+                    new_name = st.text_input("New Service Name", value=selected_service["service_name"])
+                    new_price = st.number_input("New Service Price", min_value=0, value=int(selected_service["price"]), step=5)
+                    new_duration = st.selectbox("New Duration", ["30 mins", "1 hour", "1.5 hours", "2 hours"])
+
+                    if st.button("Update Service"):
+                        for service in services:
+                            if service["service_id"] == update_id:
+                                service["service_name"] = new_name
+                                service["price"] = new_price
+                                service["duration"] = new_duration
+                                break
+
+                        save_services()
+                        st.success("Service updated successfully!")
+
+            st.divider()
+            st.markdown("### Delete Service")
+
+            if len(services) > 0:
+                delete_options = []
+
+                for service in services:
+                    delete_options.append(
+                        f"{service['service_id']} - {service['service_name']}"
+                    )
+
+                selected_delete = st.selectbox("Choose Service to Delete", delete_options)
+
+                if st.button("Delete Service"):
+                    delete_id = selected_delete.split(" - ")[0]
+
+                    updated_services = []
+
+                    for service in services:
+                        if service["service_id"] != delete_id:
+                            updated_services.append(service)
+
+                    services.clear()
+                    services.extend(updated_services)
+                    save_services()
+
+                    st.success("Service deleted successfully!")
+                    st.rerun()
+
         with admin_tab2:
-            st.markdown("### Add Available Time Slot")
+            st.markdown("### Manage Available Time Slots")
 
             if len(services) > 0:
                 service_options = []
+
                 for service in services:
                     service_options.append(
                         f"{service['service_id']} - {service['service_name']}"
                     )
 
                 selected_service = st.selectbox("Choose Service", service_options)
-                new_slot = st.text_input("Enter New Time Slot", placeholder="2026-04-05 2:00 PM")
+                service_id = selected_service.split(" - ")[0]
+
+                st.markdown("#### Add New Slot")
+                slot_date = st.date_input("Choose Slot Date", min_value=date.today())
+                slot_time = st.selectbox(
+                    "Choose Slot Time",
+                    ["10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM"]
+                )
+
+                new_slot = f"{slot_date} {slot_time}"
 
                 if st.button("Add Time Slot"):
-                    service_id = selected_service.split(" - ")[0]
-
                     for service in services:
                         if service["service_id"] == service_id:
-                            service["available_slots"].append(new_slot)
+                            if new_slot not in service["available_slots"]:
+                                service["available_slots"].append(new_slot)
+                                save_services()
+                                st.success("Time slot added successfully!")
+                            else:
+                                st.error("That time slot already exists.")
+                            break
 
-                    with services_path.open("w", encoding="utf-8") as f:
-                        json.dump(services, f, indent=4)
+                st.markdown("#### Remove Existing Slot")
 
-                    st.success("Time slot added successfully!")
+                selected_service_data = None
+
+                for service in services:
+                    if service["service_id"] == service_id:
+                        selected_service_data = service
+                        break
+
+                if selected_service_data and len(selected_service_data["available_slots"]) > 0:
+                    remove_slot = st.selectbox("Select Slot to Remove", selected_service_data["available_slots"])
+
+                    if st.button("Delete Time Slot"):
+                        for service in services:
+                            if service["service_id"] == service_id:
+                                service["available_slots"].remove(remove_slot)
+                                save_services()
+                                st.success("Time slot deleted successfully!")
+                                st.rerun()
+                else:
+                    st.info("No slots available for this service yet.")
 
             st.markdown("### Services with Slots")
             st.dataframe(services)
@@ -276,27 +434,48 @@ elif st.session_state.logged_in and page == "Dashboard":
 
             if len(services) > 0:
                 service_options = []
+
                 for service in services:
                     service_options.append(
                         f"{service['service_id']} - {service['service_name']} (${service['price']})"
                     )
 
                 selected_service = st.selectbox("Choose a Service", service_options)
-
                 selected_service_id = selected_service.split(" - ")[0]
 
-                selected_slots = []
                 selected_service_name = ""
 
                 for service in services:
                     if service["service_id"] == selected_service_id:
-                        selected_slots = service["available_slots"]
                         selected_service_name = service["service_name"]
+                        break
 
-                if len(selected_slots) > 0:
-                    chosen_slot = st.selectbox("Choose an Available Time Slot", selected_slots)
+                appointment_date = st.date_input(
+                    "Choose Appointment Date",
+                    min_value=date.today()
+                )
 
-                    if st.button("Book Appointment"):
+                appointment_time = st.selectbox(
+                    "Choose Appointment Time",
+                    ["10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM"]
+                )
+
+                full_appointment_time = f"{appointment_date} {appointment_time}"
+
+                already_booked = False
+
+                for booking in bookings:
+                    if booking["appointment_time"] == full_appointment_time and booking["status"] == "Booked":
+                        already_booked = True
+                        break
+
+                if already_booked:
+                    st.warning("This appointment time is already booked. Please choose another time.")
+
+                if st.button("Book Appointment"):
+                    if already_booked:
+                        st.error("That time is already booked.")
+                    else:
                         with st.spinner("Booking your appointment..."):
                             time.sleep(2)
 
@@ -305,40 +484,36 @@ elif st.session_state.logged_in and page == "Dashboard":
                                 "client_name": current_user["full_name"],
                                 "client_email": current_user["email"],
                                 "service_name": selected_service_name,
-                                "appointment_time": chosen_slot,
+                                "appointment_time": full_appointment_time,
                                 "status": "Booked"
                             }
 
                             bookings.append(new_booking)
-
-                            for service in services:
-                                if service["service_id"] == selected_service_id:
-                                    if chosen_slot in service["available_slots"]:
-                                        service["available_slots"].remove(chosen_slot)
-
-                            with bookings_path.open("w", encoding="utf-8") as f:
-                                json.dump(bookings, f, indent=4)
-
-                            with services_path.open("w", encoding="utf-8") as f:
-                                json.dump(services, f, indent=4)
+                            save_bookings()
 
                         st.success("Appointment booked successfully!")
-                else:
-                    st.error("No available time slots for this service right now.")
 
         with client_tab3:
             st.markdown("### My Bookings")
 
             my_bookings = []
+
             for booking in bookings:
                 if booking["client_email"] == current_user["email"]:
                     my_bookings.append(booking)
 
             st.dataframe(my_bookings)
 
-            if len(my_bookings) > 0:
+            active_bookings = []
+
+            for booking in my_bookings:
+                if booking["status"] == "Booked":
+                    active_bookings.append(booking)
+
+            if len(active_bookings) > 0:
                 cancel_options = []
-                for booking in my_bookings:
+
+                for booking in active_bookings:
                     cancel_options.append(
                         f"{booking['booking_id']} - {booking['service_name']} - {booking['appointment_time']}"
                     )
@@ -348,88 +523,47 @@ elif st.session_state.logged_in and page == "Dashboard":
                 if st.button("Cancel Booking"):
                     booking_id = cancel_choice.split(" - ")[0]
 
-                    cancelled_booking = None
-
                     for booking in bookings:
                         if booking["booking_id"] == booking_id:
                             booking["status"] = "Cancelled"
-                            cancelled_booking = booking
                             break
 
-                    if cancelled_booking:
-                        for service in services:
-                            if service["service_name"] == cancelled_booking["service_name"]:
-                                service["available_slots"].append(cancelled_booking["appointment_time"])
-
-                        with bookings_path.open("w", encoding="utf-8") as f:
-                            json.dump(bookings, f, indent=4)
-
-                        with services_path.open("w", encoding="utf-8") as f:
-                            json.dump(services, f, indent=4)
-
-                        st.success("Booking cancelled successfully!")
+                    save_bookings()
+                    st.success("Booking cancelled successfully!")
+                    st.rerun()
+            else:
+                st.info("You do not have any active bookings.")
 
 # ---------------- AI CONSULTATION ----------------
 elif st.session_state.logged_in and page == "AI Consultation":
     current_user = st.session_state.current_user
 
     st.subheader("AI Styling & Booking Assistant")
-    st.write("Answer a few questions for a simulated beauty consultation.")
+
+    st.write(
+        "Ask the AI assistant a question about your hair, skin, style goals, occasion, or what service you should book."
+    )
 
     with st.container(border=True):
-        occasion = st.selectbox(
-            "What is the occasion?",
-            ["Everyday Look", "Birthday", "Wedding", "Photoshoot", "Date Night"]
+        customer_question = st.text_area(
+            "Type your question here:",
+            placeholder="Example: I have oily skin and want soft glam for graduation pictures. What should I book?"
         )
 
-        style_preference = st.selectbox(
-            "What style do you want?",
-            ["Natural", "Soft Glam", "Full Glam", "Elegant", "Trendy"]
-        )
+        if st.button("Ask AI"):
+            if not customer_question:
+                st.error("Please type a question first.")
+            else:
+                with st.spinner("AI is thinking..."):
+                    answer = get_ai_response(customer_question, services)
 
-        hair_goal = st.selectbox(
-            "What are you looking for?",
-            ["Hair Styling", "Makeup", "Both"]
-        )
+                st.success("AI Response")
+                st.write(answer)
 
-        concern = st.selectbox(
-            "Any main concern?",
-            ["None", "Sensitive Skin", "Frizz", "Need Long-Lasting Look", "Beginner-Friendly Style"]
-        )
+    st.divider()
 
-        if st.button("Get AI Recommendation"):
-            with st.spinner("Analyzing your beauty preferences..."):
-                time.sleep(2)
-
-                recommendation = ""
-
-                if hair_goal == "Hair Styling":
-                    if style_preference == "Natural":
-                        recommendation = "AI Suggestion: A Silk Press or simple curls would match your desired natural look."
-                    elif style_preference == "Elegant":
-                        recommendation = "AI Suggestion: A sleek bun or soft waves would be a great elegant style choice."
-                    else:
-                        recommendation = "AI Suggestion: A styled look with volume and hold would fit your request."
-
-                elif hair_goal == "Makeup":
-                    if style_preference == "Soft Glam":
-                        recommendation = "AI Suggestion: Soft Glam Makeup would be a strong match for your occasion and style preference."
-                    elif style_preference == "Natural":
-                        recommendation = "AI Suggestion: A natural beat with light coverage and gloss would work well."
-                    else:
-                        recommendation = "AI Suggestion: A full makeup appointment may best match the look you want."
-
-                elif hair_goal == "Both":
-                    recommendation = "AI Suggestion: Booking both a hair styling service and makeup service would best support your overall beauty goal."
-
-                st.success(recommendation)
-
-                if concern == "Sensitive Skin":
-                    st.info("Consultation Note: You may want to request hypoallergenic or skin-friendly products.")
-                elif concern == "Frizz":
-                    st.info("Consultation Note: Ask your stylist about anti-frizz products and humidity-resistant styling.")
-                elif concern == "Need Long-Lasting Look":
-                    st.info("Consultation Note: A setting spray, finishing powder, or long-wear styling option may help.")
+    st.subheader("Available Services")
+    st.dataframe(services)
 
 # ---------------- LOGOUT ----------------
 elif st.session_state.logged_in and page == "Logout":

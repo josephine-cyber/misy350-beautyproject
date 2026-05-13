@@ -2,44 +2,43 @@ import streamlit as st
 from openai import OpenAI
 
 
-class BeautyAIAssistant:
+class BeautyChatbot:
     def __init__(self):
-        self.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+        self.client = OpenAI(api_key=st.secrets["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"])
 
-    def recommend_services(self, client_description, services):
-        service_list = ""
+    def answer_question(self, question, services):
+        service_info = ""
 
         for service in services:
-            service_list += (
+            service_info += (
                 f"- {service['service_name']}: "
                 f"${service['price']}, "
                 f"{service['duration']}, "
-                f"Available slots: {service['available_slots']}\n"
+                f"Available slots: {service.get('available_slots', [])}\n"
             )
 
         prompt = f"""
-        You are a virtual pre-appointment beauty consultant for a salon booking app.
+You are an AI beauty booking assistant.
 
-        The client described their needs as:
-        {client_description}
+Only recommend services from this salon service list:
+{service_info}
 
-        These are the ONLY services the salon currently offers:
-        {service_list}
+Customer question:
+{question}
 
-        Your job:
-        1. Analyze the client's hair type, skin type, goals, concerns, and occasion.
-        2. Recommend the best matching service or services from the salon list only.
-        3. Explain why each service fits.
-        4. Mention available appointment slots if relevant.
-        5. End by encouraging the client to book through the app.
+Answer in a friendly, helpful way.
+Recommend the best matching service from the list.
+Mention price, duration, and available times if helpful.
+Do not make up services that are not listed.
+"""
 
-        Do not recommend services that are not in the list.
-        Keep the tone friendly, professional, and helpful.
-        """
+        try:
+            response = self.client.responses.create(
+                model="gpt-4.1-mini",
+                input=prompt
+            )
 
-        response = self.client.responses.create(
-            model="gpt-4.1-mini",
-            input=prompt
-        )
+            return response.output_text
 
-        return response.output_text
+        except Exception as e:
+            return f"AI error: {e}"
