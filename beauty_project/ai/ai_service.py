@@ -18,7 +18,7 @@ client = OpenAI(api_key=os.getenv("OPEN_AI_KEY"))
 
 class BeautyChatbot:
     def __init__(self):
-        self.client = OpenAI(api_key=st.secrets["OPEN_AI_KEY"])
+        self.client = OpenAI(api_key=os.getenv("OPEN_AI_KEY"))
 
     def answer_question(self, question, services):
         service_info = ""

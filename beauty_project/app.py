@@ -3,6 +3,7 @@ import json
 import time
 from pathlib import Path
 from datetime import datetime, date
+from ai.ai_service import BeautyChatbot
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -615,6 +616,8 @@ elif st.session_state.logged_in and page == "AI Consultation":
         "Ask the AI assistant a question about your hair, skin, style goals, occasion, or what service you should book."
     )
 
+    chatbot = BeautyChatbot()
+
     with st.container(border=True):
         customer_question = st.text_area(
             "Type your question here:",
@@ -625,15 +628,16 @@ elif st.session_state.logged_in and page == "AI Consultation":
             if not customer_question:
                 st.error("Please type a question first.")
             else:
-                st.info(
-                    "AI connection goes here. If your separate ai_service.py is working, connect this button to your chatbot function."
-                )
+                with st.spinner("AI is thinking..."):
+                    answer = chatbot.answer_question(customer_question, services)
+
+                st.success("AI Response")
+                st.write(answer)
 
     st.divider()
 
     st.subheader("Available Services")
     st.dataframe(services)
-
 # ---------------- LOGOUT ----------------
 elif st.session_state.logged_in and page == "Logout":
     st.session_state.logged_in = False
