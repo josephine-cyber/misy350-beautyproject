@@ -2,9 +2,23 @@ import streamlit as st
 from openai import OpenAI
 
 
+from dotenv import load_dotenv
+from openai import OpenAI
+import os
+
+load_dotenv()
+
+
+
+st.set_page_config(page_title="AI Order Assistant", page_icon="🤖")
+st.title("🤖 Order Data Assistant")
+
+
+client = OpenAI(api_key=os.getenv("OPEN_AI_KEY"))
+
 class BeautyChatbot:
     def __init__(self):
-        self.client = OpenAI(api_key=st.secrets["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"])
+        self.client = OpenAI(api_key=st.secrets["OPEN_AI_KEY"])
 
     def answer_question(self, question, services):
         service_info = ""
@@ -26,19 +40,22 @@ Only recommend services from this salon service list:
 Customer question:
 {question}
 
-Answer in a friendly, helpful way.
 Recommend the best matching service from the list.
+Explain why it fits the customer's needs.
 Mention price, duration, and available times if helpful.
 Do not make up services that are not listed.
 """
 
         try:
-            response = self.client.responses.create(
-                model="gpt-4.1-mini",
-                input=prompt
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a helpful beauty booking assistant."},
+                    {"role": "user", "content": prompt}
+                ]
             )
 
-            return response.output_text
+            return response.choices[0].message.content
 
         except Exception as e:
             return f"AI error: {e}"

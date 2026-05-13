@@ -1,6 +1,6 @@
 import streamlit as st
-from data_manager import DataManager
-from ai_service import BeautyAIAssistant
+from data_manager.data_manager import DataManager
+from ai.ai_service import BeautyChatbot
 
 st.title("AI Pre-Appointment Consultation")
 
@@ -10,7 +10,7 @@ if not st.session_state.get("logged_in"):
 
 data = DataManager()
 services = data.load_services()
-assistant = BeautyAIAssistant()
+assistant = BeautyChatbot()
 
 st.write("Describe your hair, skin, event, style goals, budget, or any concerns.")
 

@@ -27,14 +27,14 @@ with st.container(border=True):
     )
 
     if st.button("Ask AI"):
-        if question.strip() == "":
-            st.error("Please type a question first.")
-        else:
-            with st.spinner("AI is thinking..."):
-                answer = chatbot.answer_question(question, services)
+     if question.strip() == "":
+        st.error("Please type a question first.")
+    else:
+        with st.spinner("AI is thinking..."):
+            answer = chatbot.answer_question(question, services)
 
-            st.success("AI Response")
-            st.write(answer)
+        st.success("AI Response")
+        st.write(answer)
 
 st.divider()
 
