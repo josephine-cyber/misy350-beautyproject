@@ -3,7 +3,7 @@ import json
 import time
 from pathlib import Path
 from datetime import datetime, date
-from ai.ai_service import BeautyChatbot
+
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
